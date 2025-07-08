@@ -1,0 +1,27 @@
+name: Test CI Trigger
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - staging
+
+  workflow_dispatch:
+
+jobs:
+  simulate_build_job:
+    name: Simulate a Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce the trigger event
+        run: echo "CI workflow was triggered by a ${{ github.event_name }} event."
+
+      - name: Announce the branch
+        run: echo "The branch is ${{ github.ref_name }}."
+
+      - name: Pretend to do some work
+        run: |
+          echo "Simulating a build process..."
+          sleep 10 # Wait for 10 seconds to make it feel real
+          echo "Simulation complete. This workflow will now succeed."

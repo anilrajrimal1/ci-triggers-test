@@ -1,0 +1,36 @@
+name: Test CD
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Test CI Trigger"]
+    types:
+      - completed
+
+jobs:
+  simulate_deploy_job:
+    name: Simulate a Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    outputs:
+      branch: ${{ steps.extract_branch.outputs.branch }}
+    steps:
+      - name: Announce the trigger event
+        run: echo "CD workflow was triggered by a ${{ github.event_name }} event."
+      
+      - name: Extract Branch Name
+        id: extract_branch
+        run: echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+
+      - name: Show information from the first workflow
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "The first workflow named '${{ github.event.workflow_run.name }}' has completed."
+          echo "Its conclusion was: ${{ github.event.workflow_run.conclusion }}."
+          echo "It was run against commit: ${{ github.event.workflow_run.head_sha }}"
+
+      - name: Pretend to do deployment work
+        run: |
+          echo "Simulating a deployment process..."
+          sleep 10
+          echo "Deployment simulation finished."
