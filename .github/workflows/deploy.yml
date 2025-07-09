@@ -1,36 +1,85 @@
-name: Test CD
-
+name: Deploy Backend to Server
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Test CI Trigger"]
-    types:
-      - completed
+    inputs:
+      site:
+        description: 'Select site to deploy (master branch only)'
+        required: false
+        default: 'none'
+        type: choice
+        options:
+          - 'none'
+          - 'site-a'
+          - 'site-b'
+          - 'site-c'
+
+env:
+  ECR_REGISTRY: 685797548389.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_REPOSITORY: integrated-service
+  AWS_REGION: ap-south-1
+  PHASE_HOST: https://phase.naxa.com.np
 
 jobs:
-  simulate_deploy_job:
-    name: Simulate a Deployment
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+  deploy:
+    name: Deploy to server
+    runs-on: self-hosted
+    if: github.event_name == 'workflow_dispatch'
     outputs:
       branch: ${{ steps.extract_branch.outputs.branch }}
     steps:
-      - name: Announce the trigger event
-        run: echo "CD workflow was triggered by a ${{ github.event_name }} event."
-      
       - name: Extract Branch Name
+        shell: bash
+        run: |
+          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         id: extract_branch
-        run: echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
 
-      - name: Show information from the first workflow
-        if: github.event_name == 'workflow_run'
+      - name: Validate master branch site selection
+        if: github.ref == 'refs/heads/master'
         run: |
-          echo "The first workflow named '${{ github.event.workflow_run.name }}' has completed."
-          echo "Its conclusion was: ${{ github.event.workflow_run.conclusion }}."
-          echo "It was run against commit: ${{ github.event.workflow_run.head_sha }}"
+          if [ "${{ github.event.inputs.site }}" == "none" ]; then
+            echo "Error: Site selection is required for master branch deployment"
+            exit 1
+          fi
 
-      - name: Pretend to do deployment work
+      - name: Get VM SSH host and user
+        id: get_vm_conf
         run: |
-          echo "Simulating a deployment process..."
-          sleep 10
-          echo "Deployment simulation finished."
+          case "${{ github.ref }}" in
+          refs/heads/develop)
+            export SERVER_IP=13.203
+            export SERVER_USERNAME=ubuntu
+            export PHASE_ENV=develop
+            ;;
+          refs/heads/staging)
+            export SERVER_IP=13
+            export SERVER_USERNAME=ubuntu
+            export PHASE_ENV=staging
+            ;;
+          refs/heads/master)
+            case "${{ github.event.inputs.site }}" in
+            site-a)
+              export SERVER_IP=1.2.3.4 
+              export SERVER_USERNAME=ubuntu
+              export PHASE_ENV=env-site-a
+              ;;
+            site-b)
+              export SERVER_IP=5.6.7.8
+              export SERVER_USERNAME=ubuntu
+              export PHASE_ENV=env-site-b
+              ;;
+            site-c)
+              export SERVER_IP=9.10.11.12
+              export SERVER_USERNAME=ubuntu
+              export PHASE_ENV=env-site-c
+              ;;
+            esac
+            ;;
+          esac
+          echo "SERVER_IP=${SERVER_IP}" >> $GITHUB_OUTPUT
+          echo "SERVER_USERNAME=${SERVER_USERNAME}" >> $GITHUB_OUTPUT
+          echo "PHASE_ENV=${PHASE_ENV}" >> $GITHUB_OUTPUT
+
+      - name: print data for test
+        run: |
+          echo "PHASE_ENV= ${{ steps.get_vm_conf.outputs.PHASE_ENV }}"
+          echo "BRANCH_NAME= ${{ steps.extract_branch.outputs.branch }}""
