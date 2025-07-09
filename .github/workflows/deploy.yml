@@ -1,4 +1,5 @@
 name: Deploy Backend to Server
+
 on:
   workflow_dispatch:
     inputs:
@@ -28,10 +29,10 @@ jobs:
       branch: ${{ steps.extract_branch.outputs.branch }}
     steps:
       - name: Extract Branch Name
+        id: extract_branch
         shell: bash
         run: |
           echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
 
       - name: Validate master branch site selection
         if: github.ref == 'refs/heads/master'
@@ -43,41 +44,44 @@ jobs:
 
       - name: Get VM SSH host and user
         id: get_vm_conf
+        shell: bash
         run: |
           case "${{ github.ref }}" in
-          refs/heads/develop)
-            export SERVER_IP=13.203
-            export SERVER_USERNAME=ubuntu
-            export PHASE_ENV=develop
-            ;;
-          refs/heads/staging)
-            export SERVER_IP=13
-            export SERVER_USERNAME=ubuntu
-            export PHASE_ENV=staging
-            ;;
-          refs/heads/master)
-            case "${{ github.event.inputs.site }}" in
-            site-a)
-              export SERVER_IP=1.2.3.4 
-              export SERVER_USERNAME=ubuntu
-              export PHASE_ENV=env-site-a
+            refs/heads/develop)
+              SERVER_IP="13.203"
+              SERVER_USERNAME="ubuntu"
+              PHASE_ENV="develop"
               ;;
-            site-b)
-              export SERVER_IP=5.6.7.8
-              export SERVER_USERNAME=ubuntu
-              export PHASE_ENV=env-site-b
+            refs/heads/staging)
+              SERVER_IP="13"
+              SERVER_USERNAME="ubuntu"
+              PHASE_ENV="staging"
               ;;
-            site-c)
-              export SERVER_IP=9.10.11.12
-              export SERVER_USERNAME=ubuntu
-              export PHASE_ENV=env-site-c
+            refs/heads/master)
+              case "${{ github.event.inputs.site }}" in
+                site-a)
+                  SERVER_IP="1.2.3.4"
+                  SERVER_USERNAME="ubuntu"
+                  PHASE_ENV="env-site-a"
+                  ;;
+                site-b)
+                  SERVER_IP="5.6.7.8"
+                  SERVER_USERNAME="ubuntu"
+                  PHASE_ENV="env-site-b"
+                  ;;
+                site-c)
+                  SERVER_IP="9.10.11.12"
+                  SERVER_USERNAME="ubuntu"
+                  PHASE_ENV="env-site-c"
+                  ;;
+              esac
               ;;
-            esac
-          echo "SERVER_IP=${SERVER_IP}" >> $GITHUB_OUTPUT
-          echo "SERVER_USERNAME=${SERVER_USERNAME}" >> $GITHUB_OUTPUT
-          echo "PHASE_ENV=${PHASE_ENV}" >> $GITHUB_OUTPUT
+          esac
+          echo "SERVER_IP=$SERVER_IP" >> $GITHUB_OUTPUT
+          echo "SERVER_USERNAME=$SERVER_USERNAME" >> $GITHUB_OUTPUT
+          echo "PHASE_ENV=$PHASE_ENV" >> $GITHUB_OUTPUT
 
-      - name: print data for test
+      - name: Print data for test
         run: |
-          echo "PHASE_ENV= ${{ steps.get_vm_conf.outputs.PHASE_ENV }}"
-          echo "BRANCH_NAME= ${{ steps.extract_branch.outputs.branch }}""
+          echo "PHASE_ENV=${{ steps.get_vm_conf.outputs.PHASE_ENV }}"
+          echo "BRANCH_NAME=${{ steps.extract_branch.outputs.branch }}"
