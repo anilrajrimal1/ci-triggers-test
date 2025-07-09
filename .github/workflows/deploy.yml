@@ -22,7 +22,7 @@ env:
 jobs:
   deploy:
     name: Deploy to server
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     outputs:
       branch: ${{ steps.extract_branch.outputs.branch }}
