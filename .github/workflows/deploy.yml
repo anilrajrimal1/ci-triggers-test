@@ -73,8 +73,6 @@ jobs:
               export PHASE_ENV=env-site-c
               ;;
             esac
-            ;;
-          esac
           echo "SERVER_IP=${SERVER_IP}" >> $GITHUB_OUTPUT
           echo "SERVER_USERNAME=${SERVER_USERNAME}" >> $GITHUB_OUTPUT
           echo "PHASE_ENV=${PHASE_ENV}" >> $GITHUB_OUTPUT
