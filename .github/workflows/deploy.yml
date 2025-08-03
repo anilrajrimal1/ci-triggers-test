@@ -1,87 +1,29 @@
-name: Deploy Backend to Server
+name: Local Heredoc Test
 
 on:
-  workflow_dispatch:
-    inputs:
-      site:
-        description: 'Select site to deploy (master branch only)'
-        required: false
-        default: 'none'
-        type: choice
-        options:
-          - 'none'
-          - 'site-a'
-          - 'site-b'
-          - 'site-c'
-
-env:
-  ECR_REGISTRY: 685797548389.dkr.ecr.ap-south-1.amazonaws.com
-  ECR_REPOSITORY: integrated-service
-  AWS_REGION: ap-south-1
-  PHASE_HOST: https://phase.naxa.com.np
+  push:
+    branches:
+      - main
 
 jobs:
-  deploy:
-    name: Deploy to server
+  test-heredoc:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    outputs:
-      branch: ${{ steps.extract_branch.outputs.branch }}
     steps:
-      - name: Extract Branch Name
-        id: extract_branch
+      - name: Run heredoc test locally
         shell: bash
         run: |
-          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          echo "Starting heredoc test..."
 
-      - name: Validate master branch site selection
-        if: github.ref == 'refs/heads/master'
-        run: |
-          if [ "${{ github.event.inputs.site }}" == "none" ]; then
-            echo "Error: Site selection is required for master branch deployment"
-            exit 1
-          fi
+          # Simulate getting a password or token
+          TOKEN="test_token"
 
-      - name: Get VM SSH host and user
-        id: get_vm_conf
-        shell: bash
-        run: |
-          case "${{ github.ref }}" in
-            refs/heads/develop)
-              SERVER_IP="13.203"
-              SERVER_USERNAME="ubuntu"
-              PHASE_ENV="develop"
-              ;;
-            refs/heads/staging)
-              SERVER_IP="13"
-              SERVER_USERNAME="ubuntu"
-              PHASE_ENV="staging"
-              ;;
-            refs/heads/master)
-              case "${{ github.event.inputs.site }}" in
-                site-a)
-                  SERVER_IP="1.2.3.4"
-                  SERVER_USERNAME="ubuntu"
-                  PHASE_ENV="env-site-a"
-                  ;;
-                site-b)
-                  SERVER_IP="5.6.7.8"
-                  SERVER_USERNAME="ubuntu"
-                  PHASE_ENV="env-site-b"
-                  ;;
-                site-c)
-                  SERVER_IP="9.10.11.12"
-                  SERVER_USERNAME="ubuntu"
-                  PHASE_ENV="env-site-c"
-                  ;;
-              esac
-              ;;
-          esac
-          echo "SERVER_IP=$SERVER_IP" >> $GITHUB_OUTPUT
-          echo "SERVER_USERNAME=$SERVER_USERNAME" >> $GITHUB_OUTPUT
-          echo "PHASE_ENV=$PHASE_ENV" >> $GITHUB_OUTPUT
+          # Use heredoc like in your example
+          cat <<EOF > output.txt
+          This is a test file.
+          Token is: $TOKEN
+          EOF
 
-      - name: Print data for test
-        run: |
-          echo "PHASE_ENV=${{ steps.get_vm_conf.outputs.PHASE_ENV }}"
-          echo "BRANCH_NAME=${{ steps.extract_branch.outputs.branch }}"
+          echo "Contents of output.txt:"
+          cat output.txt
+
+          echo "Heredoc test complete!"
