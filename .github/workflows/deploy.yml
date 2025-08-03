@@ -18,10 +18,10 @@ jobs:
           # Simulate getting a password or token
           TOKEN="test_token"
 
-          # Use heredoc like in your example
-          cat <<EOF > output.txt
-          This is a test file.
-          Token is: $TOKEN
+          # Use heredoc with <<-EOF and tabs (not spaces) for indentation stripping
+          cat <<-EOF > output.txt
+          	This is a test file.
+          	Token is: $TOKEN
           EOF
 
           echo "Contents of output.txt:"
