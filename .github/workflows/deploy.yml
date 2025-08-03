@@ -3,7 +3,8 @@ name: Local Heredoc Test
 on:
   push:
     branches:
-      - main
+      - master
+  workflow_dispatch:
 
 jobs:
   test-heredoc:
